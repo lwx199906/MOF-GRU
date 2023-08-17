@@ -7,16 +7,13 @@ from torch.utils.tensorboard import SummaryWriter
 from utils import MyDataset,collate_fn,EarlyStoppingCallback
 
 
-# writer = SummaryWriter(log_dir='logs')
 device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# A=['CH4ABL','N2ABL','Sa','PLD','LCD','GCD','Density','POAVAg','POAVAf','ASA','vASA','gASA','UC_volume']
 A=['CH4ABL','N2ABL','PLD','LCD','Density','Porosity','PV','gASA']
 for a in A:
     torch.manual_seed(42)
     print('准备数据...')
     dataset=MyDataset(a)
-    # 'Density'
 
 
     print('划分训练集测试集...')
@@ -26,12 +23,9 @@ for a in A:
     train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
     train_loader = DataLoader(train_dataset, batch_size=batch_size,shuffle=True,drop_last=True,collate_fn=collate_fn)
     test_loader=DataLoader(test_dataset, batch_size=batch_size,shuffle=False,drop_last=True,collate_fn=collate_fn)
-    # epo=[20,40,60]
-    # em = [20, 40, 60, 80]
-    # hd = [100, 150, 200]
-    epo=[40]
-    em = [80]
-    hd = [200]
+    epo=[20,40,60]
+    em = [20, 40, 60, 80]
+    hd = [100, 150, 200]
     for ep in epo:
         for e in em:
             for h in hd:
@@ -41,7 +35,6 @@ for a in A:
                 hidden_size=h
                 num_layers=1
                 model=GRUModel(vocab_size, embedding_size, hidden_size, num_layers).to(device)
-                # model=LSTMModel(vocab_size, embedding_size, hidden_size, num_layers).to(device)
                 # 训练模型
                 epoch=ep
                 best_loss=1000000000000000000
@@ -68,18 +61,11 @@ for a in A:
                         total_train_loss +=loss
                         optimizer.zero_grad()
                         loss.backward()
-                        # writer.add_scalar('Learning Rate', optimizer.param_groups[0]['lr'], i + 1)
                         optimizer.step()
-                        # 记录模型参数和梯度分布
-                        # for name, param in model.named_parameters():
-                        #     writer.add_histogram(f'{name}.data', param.clone().cpu().data.numpy(), i + 1)
-                        #     writer.add_histogram(f'{name}.grad', param.grad.clone().cpu().data.numpy(), i + 1)
                         train_step +=1
                     print(f'训练集上的loss：{total_train_loss/train_step}')
                     end_time=time.time()
                     print(f'第{i+1}轮训练结束,用时{end_time-start_time}秒')
-                    # if total_train_loss/train_step< best_loss:
-                    #     best_loss=total_train_loss
                 torch.save(model,f'my_models\\new\\biGRU_{a}_model_ep_{ep}_em_{e}_hd{h}.pth')
                 End_time = time.time()
                 print(f'{epoch}轮训练结束，总用时{(End_time - Start_time) / 60}分钟')
